@@ -1,0 +1,60 @@
+{
+  "name": "clawd-usage",
+  "displayName": "Clawd Usage",
+  "description": "Your Claude plan usage (5-hour and weekly limits) in the sidebar, with Clawd the crab walking around in seasonal scenes and outfits.",
+  "version": "0.1.0",
+  "publisher": "laineylouiseward",
+  "license": "MIT",
+  "icon": "icon.png",
+  "repository": { "type": "git", "url": "https://github.com/LaineyLouiseWard/clawd-usage-vscode" },
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Other", "Visualization"],
+  "keywords": ["claude", "claude code", "usage", "limits", "pet", "clawd"],
+  "main": "./extension.js",
+  "activationEvents": ["onStartupFinished"],
+  "contributes": {
+    "views": {
+      "explorer": [
+        { "type": "webview", "id": "clawdUsage.view", "name": "Clawd Usage" }
+      ]
+    },
+    "commands": [
+      { "command": "clawdUsage.pickTheme", "title": "Choose Theme", "category": "Clawd Usage", "icon": "$(paintcan)" },
+      { "command": "clawdUsage.pickOutfit", "title": "Choose Outfit", "category": "Clawd Usage", "icon": "$(person)" },
+      { "command": "clawdUsage.refresh", "title": "Refresh Usage", "category": "Clawd Usage", "icon": "$(refresh)" }
+    ],
+    "menus": {
+      "view/title": [
+        { "command": "clawdUsage.pickTheme", "when": "view == clawdUsage.view", "group": "navigation@1" },
+        { "command": "clawdUsage.pickOutfit", "when": "view == clawdUsage.view", "group": "navigation@2" },
+        { "command": "clawdUsage.refresh", "when": "view == clawdUsage.view", "group": "navigation@3" }
+      ]
+    },
+    "configuration": {
+      "title": "Clawd Usage",
+      "properties": {
+        "clawdUsage.theme": {
+          "type": "string",
+          "default": "auto",
+          "enum": ["auto", "classic", "oled", "midnight", "halloween", "christmas", "valentine", "spring", "summer", "space", "ocean", "cyberpunk"],
+          "enumDescriptions": ["Follow the season: Halloween in October, Christmas in December, and so on", "Classic (beach)", "OLED black", "Midnight", "Halloween", "Christmas", "Valentine", "Spring", "Summer", "Space", "Underwater", "Cyberpunk"],
+          "description": "The scene Clawd walks on and the card's colours."
+        },
+        "clawdUsage.outfit": {
+          "type": "string",
+          "default": "auto",
+          "description": "Clawd's outfit: auto (the theme's own), classic (none), or an outfit id such as chef, wizard, detective or programmer. Use the Choose Outfit button to see them all."
+        },
+        "clawdUsage.claudePath": {
+          "type": "string",
+          "default": "",
+          "description": "Path to the claude program. Empty: the copy bundled with the Claude Code extension, then PATH."
+        },
+        "clawdUsage.refreshSeconds": { "type": "number", "default": 60, "minimum": 30, "description": "How often to read the usage (claude -p /usage, which uses no tokens)." },
+        "clawdUsage.warnPercent": { "type": "number", "default": 60, "description": "The 5-hour number turns yellow from here." },
+        "clawdUsage.critPercent": { "type": "number", "default": 85, "description": "The 5-hour number turns red, and Clawd sweats, from here." },
+        "clawdUsage.showStatusBar": { "type": "boolean", "default": true, "description": "Show the usage in the status bar too." }
+      }
+    }
+  }
+}
