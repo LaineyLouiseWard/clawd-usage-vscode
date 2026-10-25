@@ -101,6 +101,7 @@ function readUsage(exe, ownPids) {
   return new Promise((resolve) => {
     const env = Object.assign({}, process.env);
     delete env.CLAUDECODE; // a nested-session marker would stop the probe
+    delete env.ANTHROPIC_API_KEY; // a key in the environment takes precedence over the plan login, and keys have no plan limits
     let out = '';
     let child;
     try {

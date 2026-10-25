@@ -38,7 +38,7 @@ You need a Claude Pro or Max plan and [Claude Code](https://docs.claude.com/en/d
 
 ## How it gets the numbers
 
-Every 60 seconds it runs `claude -p /usage`, the same command as typing `/usage` in Claude Code. That command calls no model, so it uses no tokens and does not count against your limits. It uses the `claude` program bundled with the Claude Code extension if you have it, then the one on your PATH, or the path in the `clawdUsage.claudePath` setting. Running sessions come from the small status files Claude Code keeps in `~/.claude/sessions/`. The extension only reads those files and runs that one command.
+Every 60 seconds it runs `claude -p /usage`, the same command as typing `/usage` in Claude Code. That command calls no model, so it uses no tokens and does not count against your limits. It uses the `claude` program bundled with the Claude Code extension if you have it, then the one on your PATH, or the path in the `clawdUsage.claudePath` setting. It leaves out any `ANTHROPIC_API_KEY` set in your environment, because the key would replace your plan login and an API key has no plan limits. Running sessions come from the small status files Claude Code keeps in `~/.claude/sessions/`. The extension only reads those files and runs that one command.
 
 ## Structure
 
