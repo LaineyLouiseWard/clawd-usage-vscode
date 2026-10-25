@@ -143,10 +143,9 @@ class ClawdView {
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${webview.cspSource}; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';">
 <link rel="stylesheet" href="${src('style.css')}"></head><body>
 <div id="card">
-  <div class="hdr"><span class="title">CLAUDE USAGE</span><span class="spacer"></span><canvas id="hearts" width="1" height="1"></canvas></div>
   <div class="row"><div class="pct"><span id="pct">--</span><span class="sign">%</span></div><div id="stage"><canvas id="scene"></canvas></div></div>
   <div class="bar"><div id="barS"></div></div>
-  <div id="reset" class="line">loading...</div>
+  <div class="line"><span id="reset">loading...</span><canvas id="hearts" width="1" height="1"></canvas></div>
   <div class="lim"><span class="lbl">WEEK</span><span id="week" class="val"></span></div>
   <div class="bar thin"><div id="barW"></div></div>
   <div class="lim"><span class="lbl">SESSIONS</span><span id="sess" class="val"></span></div>
