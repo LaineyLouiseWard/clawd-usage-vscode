@@ -1,10 +1,10 @@
 # Clawd Usage for VS Code
 
-Your Claude plan usage in the VS Code sidebar: the 5-hour window and the week, with Clawd the crab walking around in a seasonal scene. He sleeps when no Claude Code session is running, hurries about while one is working, and hops with a question mark when one is waiting for you. If you use OpenAI's Codex, a smaller card below shows your ChatGPT plan's limits too.
+Your Claude plan usage in the VS Code sidebar: the 5-hour window and the week, with Clawd the crab walking around in a seasonal scene. He sleeps when no Claude Code session is running, hurries about while one is working, and hops with a question mark when one is waiting for you.
 
-![Clawd Usage in five themes, with the ChatGPT card below](screenshot.png)
+![Clawd Usage in five themes](screenshot.png)
 
-Unofficial fan project, not made by or affiliated with Anthropic or OpenAI.
+Unofficial fan project, not made by or affiliated with Anthropic.
 
 ## Built on
 
@@ -20,11 +20,10 @@ This extension is built from three MIT-licensed projects, and the ideas and artw
 - The weekly limit with its reset time.
 - Hearts for Clawd's health, which drop as the 5-hour window fills.
 - The same numbers in the status bar. Click them to open the view.
-- A ChatGPT card under Clawd's, in OpenAI's plain black and white, with the plan's 5-hour window and week. It turns yellow and red at the same levels. It shows only when the `codex` program is installed and signed in with ChatGPT.
 
 ## Install
 
-You need a Claude Pro or Max plan and [Claude Code](https://docs.claude.com/en/docs/claude-code) signed in, either the CLI or the Claude Code VS Code extension. The ChatGPT card also needs [Codex](https://github.com/openai/codex) signed in with a ChatGPT plan.
+You need a Claude Pro or Max plan and [Claude Code](https://docs.claude.com/en/docs/claude-code) signed in, either the CLI or the Claude Code VS Code extension.
 
 1. Download `clawd-usage-<version>.vsix` from the [releases page](https://github.com/LaineyLouiseWard/clawd-usage-vscode/releases).
 2. Run `code --install-extension clawd-usage-<version>.vsix`, or in VS Code open the Extensions view, click its `…` menu and choose *Install from VSIX…*.
@@ -39,19 +38,19 @@ You need a Claude Pro or Max plan and [Claude Code](https://docs.claude.com/en/d
 
 ## How it gets the numbers
 
-Every 60 seconds it runs `claude -p /usage`, the same command as typing `/usage` in Claude Code. That command calls no model, so it uses no tokens and does not count against your limits. It uses the `claude` program bundled with the Claude Code extension if you have it, then the one on your PATH, or the path in the `clawdUsage.claudePath` setting. It leaves out any `ANTHROPIC_API_KEY` set in your environment, because the key would replace your plan login and an API key has no plan limits. Running sessions come from the small status files Claude Code keeps in `~/.claude/sessions/`.
-
-For the ChatGPT card it starts `codex app-server`, asks it for the plan's limits (`account/rateLimits/read`) and closes it. That calls no model either. It uses the `codex` on your PATH, then nvm's folders, or the path in the `clawdUsage.codexPath` setting.
-
-The extension only reads those status files and runs those two commands.
+Every 60 seconds it runs `claude -p /usage`, the same command as typing `/usage` in Claude Code. That command calls no model, so it uses no tokens and does not count against your limits. It uses the `claude` program bundled with the Claude Code extension if you have it, then the one on your PATH, or the path in the `clawdUsage.claudePath` setting. It leaves out any `ANTHROPIC_API_KEY` set in your environment, because the key would replace your plan login and an API key has no plan limits. Running sessions come from the small status files Claude Code keeps in `~/.claude/sessions/`. The extension only reads those files and runs that one command.
 
 ## Structure
 
-- `extension.js` runs inside VS Code. It reads the Claude and ChatGPT usage and the sessions, and runs the status bar item, the view and the pickers.
-- `media/` holds the view. `scenes.js` draws the scenes, `skins.js` the outfits, props and routines, `mascot.js` Clawd and his moods, and `themes.js` the themes and the seasonal choice. `main.js` lays out the cards and runs the animation.
+- `extension.js` runs inside VS Code. It reads the usage and the sessions, and runs the status bar item, the view and the pickers.
+- `media/` holds the view. `scenes.js` draws the scenes, `skins.js` the outfits, props and routines, `mascot.js` Clawd and his moods, and `themes.js` the themes and the seasonal choice. `main.js` lays out the card and runs the animation.
 - `media/skins/` and `media/patterns/` are Pinch's outfit files and background tiles.
 
 It is plain JavaScript and runs as written. To package it, run `npx @vscode/vsce package`.
+
+## Related
+
+- [ChatGPT Usage for VS Code](https://github.com/LaineyLouiseWard/chatgpt-usage-vscode): your ChatGPT plan's Codex limits in a small card, made to sit under this one.
 
 ## Licence
 
