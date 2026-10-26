@@ -23,7 +23,7 @@
   const cache = new SceneCache();
   let skins = { classic: CU.skins.CLASSIC }, patterns = {};
   let cfg = { theme: 'auto', outfit: 'auto', warnPercent: 60, critPercent: 85 };
-  let usage = null, sessions = [], note = 'loading...';
+  let usage = null, sessions = [], note = 'loading...', gpt = null;
   let theme = CU.themes.resolve('auto'), skin = CU.skins.CLASSIC;
   let wPx = 60, mouseX = null, hovered = false;
 
@@ -75,11 +75,38 @@
       const s = u.sessionReset ? span(u.sessionReset) : null;
       $('reset').textContent = s ? `resets in ${s}` : u.sessionReset ? 'window closed' : 'window not started';
     }
+    weekLine(u, 'week', 'barW');
+    $('hearts').title = m.heartsTooltip();
+    renderGpt();
+  }
+
+  function weekLine(u, textId, barId) {
     const wk = u && u.week !== null && u.week !== undefined ? u.week : null;
     const ws = wk !== null && u.weekReset ? span(u.weekReset) : null;
-    $('week').textContent = wk === null ? '' : `${wk}%` + (ws ? `  ·  ${ws}` : '');
-    $('barW').style.width = wk === null ? '0' : `${Math.min(100, wk)}%`;
-    $('hearts').title = m.heartsTooltip();
+    $(textId).textContent = wk === null ? '' : `${wk}%` + (ws ? `  ·  ${ws}` : '');
+    $(barId).style.width = wk === null ? '0' : `${Math.min(100, wk)}%`;
+  }
+
+  // The OpenAI card keeps OpenAI's own black and white; only a filling 5-hour window takes colour.
+  function renderGpt() {
+    const g = gpt;
+    $('gpt').hidden = !g;
+    if (!g) return;
+    $('gName').textContent = g.plan ? `CHATGPT ${g.plan.toUpperCase()}` : 'CHATGPT';
+    if (g.session === null || g.session === undefined) {
+      $('gPct').textContent = '--';
+      $('gBarS').style.width = '0';
+      $('gReset').textContent = g.note || '';
+    } else {
+      const lv = level(g.session);
+      $('gPct').textContent = String(g.session);
+      $('gPct').style.color = lv === 'ok' ? '' : COL[lv];
+      $('gBarS').style.width = `${Math.min(100, g.session)}%`;
+      $('gBarS').style.background = lv === 'ok' ? '' : COL[lv];
+      const s = g.sessionReset ? span(g.sessionReset) : null;
+      $('gReset').textContent = s ? `resets in ${s}` : '';
+    }
+    weekLine(g, 'gWeek', 'gBarW');
   }
 
   // ---------------------------------------------------------------- drawing ----
@@ -224,6 +251,7 @@
     if ('usage' in msg) usage = msg.usage;
     if (msg.sessions) sessions = msg.sessions;
     if (msg.note) note = msg.note;
+    if ('gpt' in msg) gpt = msg.gpt;
     applyLook();
     m.walkSpeed = 1.6;
     m.setState(sessions, usage, cfg.critPercent);

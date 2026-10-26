@@ -2,6 +2,7 @@
 // Clawd lives, and in the status bar. Data sources, as in clawd-usage-linux:
 //   `claude -p /usage --output-format text`  limit percentages; no model is called, no tokens spent
 //   ~/.claude/sessions/<pid>.json             running Claude Code sessions (busy / waiting)
+//   `codex app-server` account/rateLimits/read  the ChatGPT plan's limits for the OpenAI card; no model is called
 'use strict';
 const vscode = require('vscode');
 const cp = require('child_process');
@@ -10,6 +11,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { themes } = require('./media/themes.js');
+const { version: VERSION } = require('./package.json');
 
 const SESSIONS_DIR = path.join(os.homedir(), '.claude', 'sessions');
 const MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
@@ -113,13 +115,79 @@ function readUsage(exe, ownPids) {
   });
 }
 
+// ------------------------------------------------------------------- Codex ----
+
+// The settings path, then PATH, then nvm's folders (VS Code started from the dock may not see nvm).
+function findCodex() {
+  const set = vscode.workspace.getConfiguration('clawdUsage').get('codexPath');
+  if (set && isFile(set)) return set;
+  const names = WIN ? ['codex.exe', 'codex.cmd'] : ['codex'];
+  for (const dir of (process.env.PATH || '').split(path.delimiter)) for (const n of names) if (dir && isFile(path.join(dir, n))) return path.join(dir, n);
+  const nvm = path.join(os.homedir(), '.nvm', 'versions', 'node');
+  let vers = [];
+  try { vers = fs.readdirSync(nvm); } catch { /* no nvm */ }
+  for (const p of [...vers.map((v) => path.join(nvm, v, 'bin', 'codex')), '/usr/local/bin/codex', '/opt/homebrew/bin/codex']) {
+    if (isFile(p)) return p;
+  }
+  return null;
+}
+
+function readCodexLimits(exe) {
+  return new Promise((resolve) => {
+    // The npm `codex` is a node script, and its node sits in the same folder.
+    const env = Object.assign({}, process.env, { PATH: path.dirname(exe) + path.delimiter + (process.env.PATH || '') });
+    let child;
+    try {
+      child = cp.spawn(exe, ['app-server'], { cwd: os.homedir(), env, stdio: ['pipe', 'pipe', 'ignore'], windowsHide: true, shell: exe.endsWith('.cmd') });
+    } catch { resolve(null); return; }
+    let buf = '', done = false;
+    const finish = (limits) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      child.stdin.end(); // the server exits when its input closes
+      setTimeout(() => { if (child.exitCode === null && child.signalCode === null) child.kill(); }, 3000);
+      resolve(limits);
+    };
+    const timer = setTimeout(() => finish(null), 30000);
+    child.stdout.on('data', (d) => {
+      buf += d;
+      for (let i; (i = buf.indexOf('\n')) >= 0; buf = buf.slice(i + 1)) {
+        let m;
+        try { m = JSON.parse(buf.slice(0, i)); } catch { continue; }
+        if (m.id === 1) finish(m.result ? m.result.rateLimits || null : null);
+      }
+    });
+    child.stdin.on('error', () => {});
+    child.on('error', () => finish(null));
+    child.on('close', () => finish(null));
+    child.stdin.write([
+      { method: 'initialize', id: 0, params: { clientInfo: { name: 'clawd_usage', title: 'Clawd Usage', version: VERSION } } },
+      { method: 'initialized' },
+      { method: 'account/rateLimits/read', id: 1 },
+    ].map((m) => JSON.stringify(m)).join('\n') + '\n');
+  });
+}
+
+// primary is the 5-hour window, secondary the week; a plan without one sends null.
+function parseCodexLimits(r) {
+  const win = (w) => (w && typeof w.usedPercent === 'number' ? w : null);
+  const p = win(r && r.primary), w = win(r && r.secondary);
+  if (!p && !w) return null;
+  return {
+    plan: r.planType || null,
+    session: p ? Math.round(p.usedPercent) : null, sessionReset: p && p.resetsAt ? p.resetsAt * 1000 : null,
+    week: w ? Math.round(w.usedPercent) : null, weekReset: w && w.resetsAt ? w.resetsAt * 1000 : null,
+  };
+}
+
 // ----------------------------------------------------------------- the view ----
 
 class ClawdView {
   constructor(context) {
     this.context = context;
     this.view = null;
-    this.state = { usage: null, sessions: [], note: 'loading...' };
+    this.state = { usage: null, sessions: [], note: 'loading...', gpt: null };
   }
 
   resolveWebviewView(view) {
@@ -145,6 +213,12 @@ class ClawdView {
   <div class="line"><span id="reset">loading...</span><canvas id="hearts" width="1" height="1"></canvas></div>
   <div class="lim"><span class="lbl">WEEK</span><span id="week" class="val"></span></div>
   <div class="bar thin"><div id="barW"></div></div>
+</div>
+<div id="gpt" hidden>
+  <div class="lim top"><span class="lbl" id="gName">OPENAI</span><span id="gReset" class="val"></span></div>
+  <div class="mrow"><div class="pct"><span id="gPct">--</span><span class="sign">%</span></div><div class="bar"><div id="gBarS"></div></div></div>
+  <div class="lim"><span class="lbl">WEEK</span><span id="gWeek" class="val"></span></div>
+  <div class="bar thin"><div id="gBarW"></div></div>
 </div>
 ${scripts}
 </body></html>`;
@@ -207,7 +281,7 @@ function activate(context) {
   const ownPids = new Set();
   const bar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
   bar.command = 'clawdUsage.view.focus';
-  let probing = false;
+  let probing = false, probingGpt = false;
 
   function updateBar() {
     const show = vscode.workspace.getConfiguration('clawdUsage').get('showStatusBar');
@@ -238,6 +312,21 @@ function activate(context) {
     view.post(false);
   }
 
+  // No codex, no card. A failed read keeps the last numbers.
+  async function refreshGpt() {
+    if (probingGpt) return;
+    const exe = findCodex();
+    if (!exe) {
+      if (view.state.gpt) { view.state.gpt = null; view.post(false); }
+      return;
+    }
+    probingGpt = true;
+    const g = parseCodexLimits(await readCodexLimits(exe));
+    probingGpt = false;
+    view.state.gpt = g || (view.state.gpt && view.state.gpt.session !== undefined ? view.state.gpt : { note: 'no plan limits from codex' });
+    view.post(false);
+  }
+
   let lastSessions = '';
   function refreshSessions() {
     const s = getSessions(ownPids);
@@ -252,7 +341,7 @@ function activate(context) {
   function schedule() {
     clearInterval(usageTimer);
     const secs = Math.max(30, vscode.workspace.getConfiguration('clawdUsage').get('refreshSeconds') || 60);
-    usageTimer = setInterval(refreshUsage, secs * 1000);
+    usageTimer = setInterval(() => { refreshUsage(); refreshGpt(); }, secs * 1000);
   }
 
   async function pick(key, items) {
@@ -265,7 +354,7 @@ function activate(context) {
   context.subscriptions.push(
     bar,
     vscode.window.registerWebviewViewProvider('clawdUsage.view', view, { webviewOptions: { retainContextWhenHidden: true } }),
-    vscode.commands.registerCommand('clawdUsage.refresh', refreshUsage),
+    vscode.commands.registerCommand('clawdUsage.refresh', () => { refreshUsage(); refreshGpt(); }),
     vscode.commands.registerCommand('clawdUsage.pickTheme', () => pick('theme', [
       { id: 'auto', label: `Follow the season (now ${themes.resolve('auto').name})` },
       ...themes.ALL.map((t) => ({ id: t.id, label: t.name }))])),
@@ -276,6 +365,7 @@ function activate(context) {
       if (!e.affectsConfiguration('clawdUsage')) return;
       if (e.affectsConfiguration('clawdUsage.refreshSeconds')) schedule();
       if (e.affectsConfiguration('clawdUsage.claudePath')) refreshUsage();
+      if (e.affectsConfiguration('clawdUsage.codexPath')) refreshGpt();
       updateBar();
       view.post(false);
     }),
@@ -287,8 +377,9 @@ function activate(context) {
   updateBar();
   refreshSessions();
   refreshUsage();
+  refreshGpt();
 }
 
 function deactivate() {}
 
-module.exports = { activate, deactivate, parseUsage, parseReset };
+module.exports = { activate, deactivate, parseUsage, parseReset, parseCodexLimits };
