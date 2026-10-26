@@ -48,7 +48,7 @@ function procStat(pid) {
   try {
     const data = fs.readFileSync(`/proc/${pid}/stat`, 'utf8');
     const rest = data.slice(data.lastIndexOf(')') + 2).split(' '); // fields 3.. ; comm may contain spaces
-    return { ppid: parseInt(rest[1], 10), start: parseInt(rest[19], 10) };
+    return { start: parseInt(rest[19], 10) };
   } catch { return null; }
 }
 
@@ -67,10 +67,7 @@ function getSessions(ownPids) {
     if (!Number.isInteger(pid) || ownPids.has(pid) || !alive(pid)) continue;
     // Files outlive their processes; a reused PID has a different start time (Linux only).
     const st = procStat(pid);
-    if (st) {
-      if (st.ppid === process.pid) continue; // our own `claude -p /usage` probe
-      if (j.procStart !== undefined && Math.abs(parseInt(j.procStart, 10) - st.start) > 2) continue;
-    }
+    if (st && j.procStart !== undefined && Math.abs(parseInt(j.procStart, 10) - st.start) > 2) continue;
     out.push({ name: j.name || path.basename(String(j.cwd || '')) || '?', busy: j.status === 'busy', waiting: j.status === 'waiting' });
   }
   return out.sort((a, b) => a.name.localeCompare(b.name));
