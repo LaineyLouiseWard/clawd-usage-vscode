@@ -1,7 +1,7 @@
 {
   "name": "clawd-usage",
   "displayName": "Clawd Usage",
-  "description": "Your Claude plan usage (5-hour and weekly limits) in the sidebar, with Clawd the crab walking around in seasonal scenes and outfits.",
+  "description": "Your Claude plan usage (5-hour and weekly limits) in the sidebar, with Clawd the crab walking around in seasonal scenes and outfits, and your ChatGPT plan's limits if you use Codex.",
   "version": "0.2.0",
   "publisher": "laineylouiseward",
   "license": "MIT",
