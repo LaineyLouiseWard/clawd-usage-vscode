@@ -148,7 +148,6 @@ class ClawdView {
   <div class="line"><span id="reset">loading...</span><canvas id="hearts" width="1" height="1"></canvas></div>
   <div class="lim"><span class="lbl">WEEK</span><span id="week" class="val"></span></div>
   <div class="bar thin"><div id="barW"></div></div>
-  <div class="lim"><span class="lbl">SESSIONS</span><span id="sess" class="val"></span></div>
 </div>
 ${scripts}
 </body></html>`;

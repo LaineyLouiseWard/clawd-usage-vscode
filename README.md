@@ -17,7 +17,7 @@ This extension is built from three MIT-licensed projects, and the ideas and artw
 ## What it shows
 
 - The 5-hour window as a big number and a bar, with the time until it resets. The number turns yellow at 60% and red at 85%.
-- The weekly limit with its reset time, and how many Claude Code sessions are running.
+- The weekly limit with its reset time.
 - Hearts for Clawd's health, which drop as the 5-hour window fills.
 - The same numbers in the status bar. Click them to open the view.
 

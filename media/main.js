@@ -79,11 +79,6 @@
     const ws = wk !== null && u.weekReset ? span(u.weekReset) : null;
     $('week').textContent = wk === null ? '' : `${wk}%` + (ws ? `  ·  ${ws}` : '');
     $('barW').style.width = wk === null ? '0' : `${Math.min(100, wk)}%`;
-    const busy = sessions.filter((x) => x.busy).length, wait = sessions.filter((x) => x.waiting).length;
-    const parts = sessions.length ? [`${sessions.length} session` + (sessions.length === 1 ? '' : 's')] : ['none running'];
-    if (busy) parts.push(`${busy} working`);
-    if (wait) parts.push(`${wait} waiting`);
-    $('sess').textContent = parts.join('  ·  ');
     $('hearts').title = m.heartsTooltip();
   }
 
