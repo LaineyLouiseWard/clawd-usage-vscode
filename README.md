@@ -16,9 +16,10 @@ This extension is built from three MIT-licensed projects, and the ideas and artw
 
 ## What it shows
 
-- The 5-hour window as a big number and a bar, with the time until it resets. The number turns yellow at 60% and red at 85%.
-- The weekly limit with its reset time.
-- Hearts for Clawd's health, which drop as the 5-hour window fills.
+- The 5-hour window as a big number and a bar, with the time until it resets. On a plan with no 5-hour window, such as
+  Max 20x, the week takes its place. The number turns yellow at 60% and red at 85%.
+- The weekly limit with its reset time, when the 5-hour window leads.
+- Hearts for Clawd's health, which drop as the big number fills.
 - The same numbers in the status bar. Click them to open the view.
 
 ## Install
@@ -51,6 +52,7 @@ It is plain JavaScript and runs as written. To package it, run `npx @vscode/vsce
 ## Related
 
 - [ChatGPT Usage for VS Code](https://github.com/LaineyLouiseWard/chatgpt-usage-vscode): your ChatGPT plan's Codex limits in a small card, made to sit under this one.
+- [Gemini Usage for VS Code](https://github.com/LaineyLouiseWard/gemini-usage-vscode): your Google AI plan's weekly Antigravity CLI limits in the same kind of card.
 
 ## Licence
 

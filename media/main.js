@@ -62,19 +62,28 @@
     return `${mm}m`;
   }
 
+  // The figure the card leads with: the 5-hour window, or the week on a plan without one (Max 20x).
+  function lead(u) {
+    if (u && u.session !== null && u.session !== undefined) return { pct: u.session, reset: u.sessionReset, week: false };
+    if (u && u.week !== null && u.week !== undefined) return { pct: u.week, reset: u.weekReset, week: true };
+    return null;
+  }
+
   function renderText() {
-    const u = usage;
-    if (!u || u.session === null || u.session === undefined) {
+    const u = usage, L = lead(u);
+    if (!L) {
       $('pct').textContent = '--'; $('pct').style.color = COL.dead;
       $('barS').style.width = '0';
       $('reset').textContent = note;
     } else {
-      const lv = level(u.session);
-      $('pct').textContent = String(u.session); $('pct').style.color = COL[lv];
-      $('barS').style.width = `${Math.min(100, u.session)}%`; $('barS').style.background = COL[lv];
-      const s = u.sessionReset ? span(u.sessionReset) : null;
-      $('reset').textContent = s ? `resets in ${s}` : u.sessionReset ? 'window closed' : 'window not started';
+      const lv = level(L.pct);
+      $('pct').textContent = String(L.pct); $('pct').style.color = COL[lv];
+      $('barS').style.width = `${Math.min(100, L.pct)}%`; $('barS').style.background = COL[lv];
+      const s = L.reset ? span(L.reset) : null;
+      $('reset').textContent = s ? `${L.week ? 'week resets' : 'resets'} in ${s}` : L.reset ? 'window closed' : 'window not started';
     }
+    // When the week leads, its own row would repeat the big number.
+    $('weekLim').style.display = $('weekBar').style.display = L && L.week ? 'none' : '';
     const wk = u && u.week !== null && u.week !== undefined ? u.week : null;
     const ws = wk !== null && u.weekReset ? span(u.weekReset) : null;
     $('week').textContent = wk === null ? '' : `${wk}%` + (ws ? `  ·  ${ws}` : '');
@@ -226,7 +235,8 @@
     if (msg.note) note = msg.note;
     applyLook();
     m.walkSpeed = 1.6;
-    m.setState(sessions, usage, cfg.critPercent);
+    const L = lead(usage);
+    m.setState(sessions, L ? { session: L.pct, sessionReset: L.reset } : null, cfg.critPercent);
     renderText();
   });
 

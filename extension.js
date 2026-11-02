@@ -143,8 +143,8 @@ class ClawdView {
   <div class="row"><div class="pct"><span id="pct">--</span><span class="sign">%</span></div><div id="stage"><canvas id="scene"></canvas></div></div>
   <div class="bar"><div id="barS"></div></div>
   <div class="line"><span id="reset">loading...</span><canvas id="hearts" width="1" height="1"></canvas></div>
-  <div class="lim"><span class="lbl">WEEK</span><span id="week" class="val"></span></div>
-  <div class="bar thin"><div id="barW"></div></div>
+  <div class="lim" id="weekLim"><span class="lbl">WEEK</span><span id="week" class="val"></span></div>
+  <div class="bar thin" id="weekBar"><div id="barW"></div></div>
 </div>
 ${scripts}
 </body></html>`;
@@ -218,6 +218,10 @@ function activate(context) {
       const s = u.sessionReset ? spanText(u.sessionReset) : null, w = u.weekReset ? spanText(u.weekReset) : null;
       bar.tooltip = `Claude usage\n5-hour window: ${u.session}%` + (s ? `, resets in ${s}` : '') +
         (u.week !== null ? `\nWeek: ${u.week}%` + (w ? `, resets in ${w}` : '') : '') + '\nClick to open Clawd';
+    } else if (u && u.week !== null) { // a plan with no 5-hour window (Max 20x): the week leads
+      const w = u.weekReset ? spanText(u.weekReset) : null;
+      bar.text = `$(pulse) wk ${u.week}%`;
+      bar.tooltip = `Claude usage\nWeek: ${u.week}%` + (w ? `, resets in ${w}` : '') + '\nNo 5-hour window on this plan\nClick to open Clawd';
     } else { bar.text = '$(pulse) --%'; bar.tooltip = `Claude usage: ${view.state.note}`; }
     bar.show();
   }
