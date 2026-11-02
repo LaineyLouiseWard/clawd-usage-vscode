@@ -3,10 +3,12 @@
   --muted: #8B8B94; --label: #6B7280; --text: #D4D4D8; --faint: #52525B;
   --track: rgba(255, 255, 255, 0.15); --week: #60A5FA; --border: rgba(255, 255, 255, 0.2);
 }
-html, body { margin: 0; padding: 0; background: transparent; }
+/* No scrollbar: it would take width from the card; a short view still scrolls with the wheel. */
+html, body { margin: 0; padding: 0; background: transparent; overflow-x: hidden; scrollbar-width: none; }
+html::-webkit-scrollbar, body::-webkit-scrollbar { width: 0; height: 0; display: none; }
 body { padding: 8px 10px 10px; font-family: var(--vscode-font-family, system-ui, sans-serif); user-select: none; }
 #card {
-  position: relative; border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px 11px;
+  position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; padding: 9px 11px 11px;
   background-color: #1A1A1E; background-repeat: repeat; image-rendering: pixelated; color: var(--text);
 }
 #hearts { image-rendering: pixelated; flex: none; }
@@ -14,7 +16,7 @@ body { padding: 8px 10px 10px; font-family: var(--vscode-font-family, system-ui,
 .pct { display: flex; align-items: flex-end; flex: none; padding-bottom: 2px; }
 #pct { font-size: 32px; font-weight: 300; line-height: 1; color: var(--dead); }
 .sign { font-size: 14px; color: var(--muted); margin: 0 0 4px 2px; }
-#stage { flex: 1; min-width: 0; line-height: 0; cursor: pointer; }
+#stage { flex: 1; min-width: 0; overflow: hidden; border-radius: 6px; line-height: 0; cursor: pointer; } /* a narrow view clips the scene */
 #scene { image-rendering: pixelated; border-radius: 6px; }
 .bar { height: 6px; border-radius: 3px; background: var(--track); margin-top: 4px; overflow: hidden; }
 .bar.thin { height: 4px; border-radius: 2px; }
